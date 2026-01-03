@@ -30,4 +30,42 @@ partial def unusedName (used : List Name) : Name :=
     | none => loop (suffix ++ "'")
   loop ""
 
-#eval unusedName ("x'" :: standardNames)
+/--
+Replace all free occurrences of the variable `V` in the expression `E` with expression `R`
+(E[V := R]).
+
+Implements capture-avoiding substitution.
+-/
+partial def substitute (var : Name) (expr : Term) (replacement : Term) : Term :=
+  let replacementFV := freeVars replacement
+
+  let rec go (t : Term) : Term :=
+    match t with
+    | Term.var n =>
+      -- Rule: x[x := N] = N; y[x := N] = y
+      if n == var then replacement else Term.var n
+
+    | Term.app m1 m2 =>
+      -- Rule: (M1 M2)[x := N] = (M1[x := N]) (M2[x := N])
+      Term.app (go m1) (go m2)
+
+    | Term.abs y m =>
+      if var == y then
+        -- Rule: (λx.M)[x := N] = λx.M
+        -- The variable x is bound, stop substitution.
+        Term.abs y m
+      else if replacementFV.contains y then
+        -- Rule: (λy.M)[x := N] where y ∈ FV(N) and x ≠ y (would cause capture).
+
+        -- α-convert λy.M to λz.M[y := z] and rename the body.
+        let fv := (freeVars m) ++ replacementFV -- Forbidden names
+        let newName := unusedName fv
+        let mRenamed := substitute y m (Term.var newName)
+
+        -- Continue substitution in the new body.
+        Term.abs newName (go mRenamed)
+      else
+        -- No capture risk (y ∉ FV(N)), continue substitution in body.
+        Term.abs y (go m)
+
+  go expr

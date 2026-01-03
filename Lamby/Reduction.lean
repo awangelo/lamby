@@ -58,7 +58,7 @@ partial def substitute (var : Name) (expr : Term) (replacement : Term) : Term :=
         -- Rule: (λy.M)[x := N] where y ∈ FV(N) and x ≠ y (would cause capture).
 
         -- α-convert λy.M to λz.M[y := z] and rename the body.
-        let fv := (freeVars m) ++ replacementFV -- Forbidden names
+        let fv := (freeVars m) ++ replacementFV -- Forbidden names.
         let newName := unusedName fv
         let mRenamed := substitute y m (Term.var newName)
 
@@ -69,3 +69,39 @@ partial def substitute (var : Name) (expr : Term) (replacement : Term) : Term :=
         Term.abs y (go m)
 
   go expr
+
+/--
+Reduces a term to its normal form using Normal Order strategy
+(Leftmost-outermost reduction).
+-/
+partial def reduce : Term → Term
+  | Term.var n => Term.var n
+
+  | Term.abs n body => Term.abs n (reduce body)
+
+  | Term.app (Term.abs x body) arg =>
+    reduce (substitute x body arg)
+
+  | Term.app t1 t2 =>
+      let t1' := reduce t1
+      match t1' with
+      -- If t1 reduced, we have a new term (t1' t2), try reducing it again.
+      | Term.abs _ _ => reduce (Term.app t1' t2)
+      -- t1' is in normal form, try reducing t2.
+      | _ => Term.app t1' (reduce t2)
+
+
+#eval -- (λx. y) x
+  reduce (Term.app (Term.abs "x" (Term.var "y")) (Term.var "x"))
+
+#eval -- (λx. λy. x) y
+  reduce (Term.app (Term.abs "x" (Term.abs "y" (Term.var "x"))) (Term.var "y"))
+
+#eval -- (λy. x) y
+  reduce (Term.app (Term.abs "y" (Term.var "x")) (Term.var "y"))
+
+#eval -- (λx. λy. x y) y
+  reduce (Term.app (Term.abs "x" (Term.abs "y" (Term.app (Term.var "x") (Term.var "y")))) (Term.var "y"))
+
+#eval -- (λx. λx. y) y
+  reduce (Term.app (Term.abs "x" (Term.abs "x" (Term.var "y"))) (Term.var "y"))

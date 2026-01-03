@@ -1,0 +1,10 @@
+name = "lamby"
+version = "0.1.0"
+defaultTargets = ["lamby"]
+
+[[lean_lib]]
+name = "Lamby"
+
+[[lean_exe]]
+name = "lamby"
+root = "Main"

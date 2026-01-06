@@ -17,16 +17,3 @@ def Term.toString : Term → String
 
 instance : ToString Term where
   toString := Term.toString
-
-
--- x
-#eval Term.var "x"
-
--- ID: (λx.x)
-#eval Term.abs "x" (Term.var "x")
-
--- (x y)
-#eval Term.app (Term.var "x") (Term.var "y")
-
-
-#eval Term.app (Term.abs "x" (Term.var "x")) (Term.var "y")

@@ -117,17 +117,3 @@ def parse (s : String) : Except String Term :=
     | Except.ok (t, []) => Except.ok t  -- No remaining tokens.
     | Except.ok (_, t :: _) => Except.error s!"Syntax error: unexpected token \"{t}\""
     | Except.error e => Except.error e
-
-#eval parse "\\x. x"
-
-#eval parse "a b c"
-
-#eval parse "\\x. a b"
-
-#eval parse "(\\x. x) y"
-
-#eval parse "(x y"
-
-#eval parse "λx.)"
-
-#eval parse "λx.\\n"

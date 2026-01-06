@@ -89,19 +89,3 @@ partial def reduce : Term → Term
       | Term.abs _ _ => reduce (Term.app t1' t2)
       -- t1' is in normal form, try reducing t2.
       | _ => Term.app t1' (reduce t2)
-
-
-#eval -- (λx. y) x
-  reduce (Term.app (Term.abs "x" (Term.var "y")) (Term.var "x"))
-
-#eval -- (λx. λy. x) y
-  reduce (Term.app (Term.abs "x" (Term.abs "y" (Term.var "x"))) (Term.var "y"))
-
-#eval -- (λy. x) y
-  reduce (Term.app (Term.abs "y" (Term.var "x")) (Term.var "y"))
-
-#eval -- (λx. λy. x y) y
-  reduce (Term.app (Term.abs "x" (Term.abs "y" (Term.app (Term.var "x") (Term.var "y")))) (Term.var "y"))
-
-#eval -- (λx. λx. y) y
-  reduce (Term.app (Term.abs "x" (Term.abs "x" (Term.var "y"))) (Term.var "y"))
